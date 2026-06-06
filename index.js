@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 
 // GET all jobs (with filters)
 app.get("/api/alljobs", async (req, res) => {
-  console.log(req.query)
+  // console.log(req.query)
   try {
     const query = {};
 
@@ -72,6 +72,24 @@ app.post("/api/alljobs", async (req, res) => {
   }
 });
 
+// POST new job
+app.post("/api/companyinfo", async (req, res) => {
+  try {
+    console.log("Incoming Job Data:", req.body);
+
+    const result = await Companyapi.insertOne(req.body);
+
+    res.send({
+      success: true,
+      message: "Job created successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("POST error:", error);
+    res.status(500).send({ success: false, message: "Insert failed" });
+  }
+});
+
 // Start server AFTER DB connection
 async function startServer() {
   try {
@@ -80,6 +98,7 @@ async function startServer() {
 
     const db = client.db("Jobseekingplatform");
     Jobsapi = db.collection("alljobs");
+    Companyapi = db.collection('companyinfo')
 
     app.listen(port, () => {
       console.log(`Server running on port ${port} 🚀`);
