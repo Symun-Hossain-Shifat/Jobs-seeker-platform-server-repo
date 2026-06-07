@@ -33,6 +33,26 @@ app.get("/", (req, res) => {
 });
 
 // GET all jobs (with filters)
+app.get("/api/companyinfo", async (req, res) => {
+  console.log(req.query.recruiterId)
+  try {
+    const query = {};
+
+    
+    if (req.query.recruiterId) {
+      query.recruiterId = req.query.recruiterId;
+    }
+
+    const result = await Companyapi.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("GET error:", error);
+    res.status(500).send({ success: false, message: "Server Error" });
+  }
+});
+
+
+// GET all jobs (with filters)
 app.get("/api/alljobs", async (req, res) => {
   // console.log(req.query)
   try {
