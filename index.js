@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -33,6 +33,9 @@ app.get("/", (req, res) => {
 });
 
 // GET all jobs (with filters)
+// 
+
+
 app.get("/api/companyinfo", async (req, res) => {
   console.log(req.query.recruiterId)
   try {
@@ -52,25 +55,89 @@ app.get("/api/companyinfo", async (req, res) => {
 });
 
 
-// GET all jobs (with filters)
-app.get("/api/alljobs", async (req, res) => {
-  // console.log(req.query)
+// app.get("/api/alljobs", async (req, res) => {
+//   try {
+//     const { companyId, status } = req.query;
+
+//     console.log("companyId:", companyId);
+//     console.log("status:", status);
+
+//     if (!companyId) {
+//       return res.status(400).send({
+//         success: false,
+//         message: "companyId is required",
+//       });
+//     }
+
+//     const query = {
+//       companyId,
+//     };
+
+//     if (status) {
+//       query.status = status;
+//     }
+
+//     console.log("QUERY:", query);
+
+//     const result = await Jobsapi.find(query).toArray();
+
+//     res.send(result);
+//   } catch (error) {
+//     console.error(error);
+
+//     res.status(500).send({
+//       success: false,
+//       message: "Server Error",
+//     });
+//   }
+// });
+
+
+// // GET all jobs (with filters)
+// app.get("/api/alljobs", async (req, res) => {
+//   console.log(req.query.id)
+//   const resule = await Jobsapi.find().toArray()
+//   res.send()
+// });
+
+
+aapp.get("/api/alljobs", async (req, res) => {
   try {
+    const { companyId, status } = req.query;
+
     const query = {};
 
-    if (req.query.companyId) {
-      query.companyId = req.query.companyId;
+    if (companyId) {
+      query.companyId = companyId;
     }
 
-    if (req.query.status) {
-      query.status = req.query.status;
+    if (status) {
+      query.status = status;
     }
 
     const result = await Jobsapi.find(query).toArray();
+
     res.send(result);
   } catch (error) {
-    console.error("GET error:", error);
-    res.status(500).send({ success: false, message: "Server Error" });
+    res.status(500).send({ success: false });
+  }
+});
+
+app.get("/api/alljobs/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await Jobsapi.findOne({
+      _id: new ObjectId(id),
+    });
+
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Server Error",
+    });
   }
 });
 
