@@ -76,16 +76,44 @@ app.get("/api/appliedjob", async (req, res) => {
   }
 });
 
-app.post( '/api/subscription' , async (req , res) => {
-  const Data = req.body
-  console.log(Data)
-  const Maindata = {
-    ...Data , Createdat : new Date()
-  }
-  const result = await Subscriptionapi.insertOne(Maindata);
-  res.send(result)
-})
+app.post('/api/subscription', async (req, res) => {
+  try {
+    const Data = req.body;
 
+    const Maindata = {
+      ...Data,
+      Createdat: new Date(),
+    };
+
+    // সাবস্ক্রিপশন insert
+    const result = await Subscriptionapi.insertOne(Maindata);
+
+    const email = req.body.email;
+    const planid = req.body.PlanID;
+
+    const filter = { email: email };
+
+    const updateddocument = {
+      $set: {
+        Plans: planid,
+      },
+    };
+
+    // user update
+    const updatedresult = await Usercollection.updateOne(
+      filter,
+      updateddocument
+    );
+
+    return res.json({
+      subscription: result,
+      userUpdate: updatedresult,
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 app.get("/api/alljobs", async (req, res) => {
   try {
@@ -193,6 +221,7 @@ async function startServer() {
     Companyapi = db.collection('companyinfo')
     Appliedapi = db.collection('appliedjob')
     Subscriptionapi = db.collection('Subscription')
+    Usercollection = db.collection('user')
 
     app.listen(port, () => {
       console.log(`Server running on port ${port} 🚀`);
