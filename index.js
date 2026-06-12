@@ -32,8 +32,6 @@ app.get("/", (req, res) => {
   res.send("Job API Server is Running 🚀");
 });
 
-// GET all jobs (with filters)
-// 
 
 
 app.get("/api/companyinfo", async (req, res) => {
@@ -55,53 +53,41 @@ app.get("/api/companyinfo", async (req, res) => {
 });
 
 
-// app.get("/api/alljobs", async (req, res) => {
-//   try {
-//     const { companyId, status } = req.query;
 
-//     console.log("companyId:", companyId);
-//     console.log("status:", status);
+app.get("/api/appliedjob", async (req, res) => {
+  try {
+    const { company } = req.query;
 
-//     if (!companyId) {
-//       return res.status(400).send({
-//         success: false,
-//         message: "companyId is required",
-//       });
-//     }
+    console.log(company)
 
-//     const query = {
-//       companyId,
-//     };
+    const query = {};
 
-//     if (status) {
-//       query.status = status;
-//     }
+    if (company) {
+      query.company = company;
+    }
 
-//     console.log("QUERY:", query);
+    
 
-//     const result = await Jobsapi.find(query).toArray();
+    const result = await Appliedapi.find(query).toArray();
 
-//     res.send(result);
-//   } catch (error) {
-//     console.error(error);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ success: false });
+  }
+});
 
-//     res.status(500).send({
-//       success: false,
-//       message: "Server Error",
-//     });
-//   }
-// });
+app.post( '/api/subscription' , async (req , res) => {
+  const Data = req.body
+  console.log(Data)
+  const Maindata = {
+    ...Data , Createdat : new Date()
+  }
+  const result = await Subscriptionapi.insertOne(Maindata);
+  res.send(result)
+})
 
 
-// // GET all jobs (with filters)
-// app.get("/api/alljobs", async (req, res) => {
-//   console.log(req.query.id)
-//   const resule = await Jobsapi.find().toArray()
-//   res.send()
-// });
-
-
-aapp.get("/api/alljobs", async (req, res) => {
+app.get("/api/alljobs", async (req, res) => {
   try {
     const { companyId, status } = req.query;
 
@@ -160,6 +146,25 @@ app.post("/api/alljobs", async (req, res) => {
 });
 
 // POST new job
+app.post("/api/appliedjob", async (req, res) => {
+  try {
+    console.log("Incoming Job Data:", req.body);
+
+    const result = await Appliedapi.insertOne(req.body);
+
+    res.send({
+      success: true,
+      message: "Job created successfully",
+      result,
+    });
+  } catch (error) {
+    console.error("POST error:", error);
+    res.status(500).send({ success: false, message: "Insert failed" });
+  }
+});
+
+
+
 app.post("/api/companyinfo", async (req, res) => {
   try {
     console.log("Incoming Job Data:", req.body);
@@ -186,6 +191,8 @@ async function startServer() {
     const db = client.db("Jobseekingplatform");
     Jobsapi = db.collection("alljobs");
     Companyapi = db.collection('companyinfo')
+    Appliedapi = db.collection('appliedjob')
+    Subscriptionapi = db.collection('Subscription')
 
     app.listen(port, () => {
       console.log(`Server running on port ${port} 🚀`);
