@@ -7,10 +7,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  })
+);
 app.use(express.json());
 
 // MongoDB URI
@@ -32,10 +34,35 @@ app.get("/", (req, res) => {
   res.send("Job API Server is Running 🚀");
 });
 
+const Validatedapi = (req , res , next ) => {
+const Token = req.headers?.authorization.split(' ')[1]
+if(!Token){
+  return res.status(401).send({message : 'Unauthorized Access'})
+}
+  console.log(Token)
+next()
+}
+
+app.patch("/api/companyinfo/:id", Validatedapi, async (req, res) => {
+  // console.log(req.query.recruiterId)
+ 
+   console.log(req.body)
+     const filter = { _id : new ObjectId(req.params.id) }
+     const newdata = {
+      $set: {
+        status : req.body?.status
+      }
+     }
+
+    const result = await Companyapi.updateOne(filter , newdata )
+    
+    res.send(result)
+});
 
 
-app.get("/api/companyinfo", async (req, res) => {
-  console.log(req.query.recruiterId)
+
+app.get("/api/companyinfo", Validatedapi, async (req, res) => {
+  // console.log(req.query.recruiterId)
   try {
     const query = {};
 
@@ -43,6 +70,11 @@ app.get("/api/companyinfo", async (req, res) => {
     if (req.query.recruiterId) {
       query.recruiterId = req.query.recruiterId;
     }
+    
+    if (req.query.email) {
+      query.email = req.query.email;
+    }
+    
 
     const result = await Companyapi.find(query).toArray();
     res.send(result);
@@ -54,11 +86,12 @@ app.get("/api/companyinfo", async (req, res) => {
 
 
 
-app.get("/api/appliedjob", async (req, res) => {
-  try {
-    const { company } = req.query;
 
-    console.log(company)
+app.get("/api/appliedjob", Validatedapi, async (req, res) => {
+  try {
+    const { company , email } = req.query;
+
+    // console.log(company)
 
     const query = {};
 
@@ -66,6 +99,10 @@ app.get("/api/appliedjob", async (req, res) => {
       query.company = company;
     }
 
+    if (email) {
+      query.email = email ;
+    }
+    
     
 
     const result = await Appliedapi.find(query).toArray();
@@ -76,7 +113,7 @@ app.get("/api/appliedjob", async (req, res) => {
   }
 });
 
-app.post('/api/subscription', async (req, res) => {
+app.post('/api/subscription', Validatedapi,  async (req, res) => {
   try {
     const Data = req.body;
 
@@ -137,7 +174,7 @@ app.get("/api/alljobs", async (req, res) => {
   }
 });
 
-app.get("/api/alljobs/:id", async (req, res) => {
+app.get("/api/alljobs/:id", Validatedapi, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -156,7 +193,7 @@ app.get("/api/alljobs/:id", async (req, res) => {
 });
 
 // POST new job
-app.post("/api/alljobs", async (req, res) => {
+app.post("/api/alljobs", Validatedapi, async (req, res) => {
   try {
     // console.log("Incoming Job Data:", req.body);
 
@@ -174,7 +211,7 @@ app.post("/api/alljobs", async (req, res) => {
 });
 
 // POST new job
-app.post("/api/appliedjob", async (req, res) => {
+app.post("/api/appliedjob", Validatedapi,  async (req, res) => {
   try {
     console.log("Incoming Job Data:", req.body);
 
@@ -193,11 +230,14 @@ app.post("/api/appliedjob", async (req, res) => {
 
 
 
-app.post("/api/companyinfo", async (req, res) => {
+app.post("/api/companyinfo", Validatedapi,  async (req, res) => {
   try {
-    console.log("Incoming Job Data:", req.body);
-
-    const result = await Companyapi.insertOne(req.body);
+    
+   const Data = req.body
+   const NewData = {
+    ...Data , Createdat : new Date()
+   }
+    const result = await Companyapi.insertOne(NewData);
 
     res.send({
       success: true,
