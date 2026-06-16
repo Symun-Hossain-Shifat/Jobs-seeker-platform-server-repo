@@ -34,16 +34,62 @@ app.get("/", (req, res) => {
   res.send("Job API Server is Running 🚀");
 });
 
-const Validatedapi = (req , res , next ) => {
-const Token = req.headers?.authorization.split(' ')[1]
-if(!Token){
-  return res.status(401).send({message : 'Unauthorized Access'})
+
+
+const Validatedapi = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+ 
+  if (!authorization) {
+    return res.status(401).send({
+      message: "Unauthorized Access",
+    });
+  }
+
+  const Token = authorization.split(" ")[1];
+
+  if (!Token) {
+    return res.status(401).send({
+      message: "Unauthorized Access",
+    });
+  }
+  const query = { token: Token };
+  const result = await sessionscollection.findOne(query);
+
+  if (!result) {
+    return res.status(401).send({
+      message: "Invalid Token",
+    });
+  }
+
+  const userId = result.userId
+
+  const userquery = {
+    _id : userId
+  }
+  const user = await Usercollection.findOne(userquery)
+//  console.log(user)
+  if (!user) {
+  return res.status(401).send({
+    message: "User not found",
+  });
 }
-  console.log(Token)
-next()
+// console.log( user)
+req.user = user;
+next();
+};
+
+const ValidateSeeker = async(req , res , next ) => {
+  console.log(req.user?.role)
+  if(req.user?.role !== 'Job Seeker'){
+    return res.status(403).send({
+    message: "User not found",
+  })
+  }
+  next()
 }
 
-app.patch("/api/companyinfo/:id", Validatedapi, async (req, res) => {
+
+app.patch("/api/companyinfo/:id", Validatedapi ,  async (req, res) => {
   // console.log(req.query.recruiterId)
  
    console.log(req.body)
@@ -61,7 +107,7 @@ app.patch("/api/companyinfo/:id", Validatedapi, async (req, res) => {
 
 
 
-app.get("/api/companyinfo", Validatedapi, async (req, res) => {
+app.get("/api/companyinfo",  async (req, res) => {
   // console.log(req.query.recruiterId)
   try {
     const query = {};
@@ -87,7 +133,7 @@ app.get("/api/companyinfo", Validatedapi, async (req, res) => {
 
 
 
-app.get("/api/appliedjob", Validatedapi, async (req, res) => {
+app.get("/api/appliedjob" ,   async (req, res) => {
   try {
     const { company , email } = req.query;
 
@@ -113,7 +159,7 @@ app.get("/api/appliedjob", Validatedapi, async (req, res) => {
   }
 });
 
-app.post('/api/subscription', Validatedapi,  async (req, res) => {
+app.post('/api/subscription', Validatedapi , async (req, res) => {
   try {
     const Data = req.body;
 
@@ -174,7 +220,7 @@ app.get("/api/alljobs", async (req, res) => {
   }
 });
 
-app.get("/api/alljobs/:id", Validatedapi, async (req, res) => {
+app.get("/api/alljobs/:id",async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -193,7 +239,7 @@ app.get("/api/alljobs/:id", Validatedapi, async (req, res) => {
 });
 
 // POST new job
-app.post("/api/alljobs", Validatedapi, async (req, res) => {
+app.post("/api/alljobs", Validatedapi , async (req, res) => {
   try {
     // console.log("Incoming Job Data:", req.body);
 
@@ -211,7 +257,7 @@ app.post("/api/alljobs", Validatedapi, async (req, res) => {
 });
 
 // POST new job
-app.post("/api/appliedjob", Validatedapi,  async (req, res) => {
+app.post("/api/appliedjob",Validatedapi ,   async (req, res) => {
   try {
     console.log("Incoming Job Data:", req.body);
 
@@ -230,7 +276,7 @@ app.post("/api/appliedjob", Validatedapi,  async (req, res) => {
 
 
 
-app.post("/api/companyinfo", Validatedapi,  async (req, res) => {
+app.post("/api/companyinfo", Validatedapi , async (req, res) => {
   try {
     
    const Data = req.body
@@ -262,6 +308,7 @@ async function startServer() {
     Appliedapi = db.collection('appliedjob')
     Subscriptionapi = db.collection('Subscription')
     Usercollection = db.collection('user')
+    sessionscollection = db.collection('session')
 
     app.listen(port, () => {
       console.log(`Server running on port ${port} 🚀`);
